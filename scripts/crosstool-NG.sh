@@ -253,11 +253,6 @@ if [    "${CT_SAVE_TARBALLS}" = "y"     \
     CT_SAVE_TARBALLS=
 fi
 
-# Check now if we can write to the destination directory:
-if [ -d "${CT_PREFIX_DIR}" ]; then
-    CT_TestAndAbort "Destination directory '${CT_PREFIX_DIR}' is not removable" ! -w $(dirname "${CT_PREFIX_DIR}")
-fi
-
 # Good, now grab a bit of informations on the system we're being run on,
 # just in case something goes awok, and it's not our fault:
 CT_SYS_USER=$(id -un)
@@ -618,10 +613,7 @@ if [ -z "${CT_RESTART}" ]; then
     rm -f "${testc}"
 
     CT_DoLog EXTRA "Installing user-supplied crosstool-NG configuration"
-    CT_DoExecLog ALL mkdir -p "${CT_PREFIX_DIR}/bin"
-    CT_DoExecLog DEBUG ${install} -m 0755 "${CT_LIB_DIR}/scripts/toolchain-config.in" "${CT_PREFIX_DIR}/bin/${CT_TARGET}-ct-ng.config"
-    CT_DoExecLog DEBUG ${sed} -i -e 's,@@grep@@,"'"${grep}"'",;' "${CT_PREFIX_DIR}/bin/${CT_TARGET}-ct-ng.config"
-    bzip2 -c -9 .config >>"${CT_PREFIX_DIR}/bin/${CT_TARGET}-ct-ng.config"
+    CT_InstallConfigurationFile .config ct-ng
 
     CT_DoStep EXTRA "Dumping internal crosstool-NG configuration"
     CT_DoLog EXTRA "Building a toolchain for:"
@@ -669,7 +661,6 @@ if [ "${CT_ONLY_DOWNLOAD}" != "y" -a "${CT_ONLY_EXTRACT}" != "y" ]; then
     do_stop=0
     prev_step=
     [ -n "${CT_RESTART}" ] && do_it=0 || do_it=1
-    # Aha! CT_STEPS comes from steps.mk!
     for step in ${CT_STEPS}; do
         if [ ${do_it} -eq 0 ]; then
             if [ "${CT_RESTART}" = "${step}" ]; then
